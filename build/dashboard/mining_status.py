@@ -83,6 +83,7 @@ async def get_xmrig_proxy_summary(session, proxy_host):
             if response.status == 200:
                 data = await response.json()
                 # Extract aggregate stats from proxy
+                # NOTE: XMRig Proxy API returns hashrate in KH/s, but we need H/s for consistency with P2Pool stratum stats
                 hashrate = data.get("hashrate", {}).get("total", [0, 0, 0, 0, 0, 0])
                 return {
                     "proxy_host": proxy_host,
@@ -90,53 +91,12 @@ async def get_xmrig_proxy_summary(session, proxy_host):
                     "uptime": data.get("uptime", 0),
                     "miners_now": data.get("miners", {}).get("now", 0),
                     "miners_max": data.get("miners", {}).get("max", 0),
-                    "h10s": hashrate[0] if len(hashrate) > 0 else 0,
-                    "h1m": hashrate[1] if len(hashrate) > 1 else 0,
-                    "h15m": hashrate[2] if len(hashrate) > 2 else 0,
-                    "h1h": hashrate[3] if len(hashrate) > 3 else 0,
-                    "h12h": hashrate[4] if len(hashrate) > 4 else 0,
-                    "h24h": hashrate[5] if len(hashrate) > 5 else 0,
-                    "accepted": data.get("results", {}).get("accepted", 0),
-                    "rejected": data.get("results", {}).get("rejected", 0),
-                    "version": data.get("version", "unknown")
-                }
-            else:
-                print(f"XMRig Proxy {proxy_host} returned status {response.status}", flush=True)
-    except Exception as e:
-        print(f"Error fetching XMRig Proxy summary from {proxy_host}: {e}", flush=True)
-    return None
-
-async def get_xmrig_proxy_summary(session, proxy_host):
-    """Query a single XMRig Proxy API for aggregate stats"""
-    url = f"http://{proxy_host}:{XMRIG_API_PORT}/2/summary"
-    timeout = ClientTimeout(total=API_TIMEOUT * 3)
-
-    # Prepare headers with access token if configured
-    headers = {}
-    if XMRIG_PROXY_TOKEN:
-        headers['Authorization'] = f'Bearer {XMRIG_PROXY_TOKEN}'
-
-    try:
-        async with session.get(url, headers=headers, timeout=timeout) as response:
-            if response.status == 401:
-                print(f"ERROR: XMRig Proxy {proxy_host} returned 401 UNAUTHORIZED.", flush=True)
-                return None
-            if response.status == 200:
-                data = await response.json()
-                # Extract aggregate stats from proxy
-                hashrate = data.get("hashrate", {}).get("total", [0, 0, 0, 0, 0, 0])
-                return {
-                    "proxy_host": proxy_host,
-                    "worker_id": data.get("worker_id", "unknown"),
-                    "uptime": data.get("uptime", 0),
-                    "miners_now": data.get("miners", {}).get("now", 0),
-                    "miners_max": data.get("miners", {}).get("max", 0),
-                    "h10s": hashrate[0] if len(hashrate) > 0 else 0,
-                    "h1m": hashrate[1] if len(hashrate) > 1 else 0,
-                    "h15m": hashrate[2] if len(hashrate) > 2 else 0,
-                    "h1h": hashrate[3] if len(hashrate) > 3 else 0,
-                    "h12h": hashrate[4] if len(hashrate) > 4 else 0,
-                    "h24h": hashrate[5] if len(hashrate) > 5 else 0,
+                    "h10s": (hashrate[0] * 1000) if len(hashrate) > 0 else 0,
+                    "h1m": (hashrate[1] * 1000) if len(hashrate) > 1 else 0,
+                    "h15m": (hashrate[2] * 1000) if len(hashrate) > 2 else 0,
+                    "h1h": (hashrate[3] * 1000) if len(hashrate) > 3 else 0,
+                    "h12h": (hashrate[4] * 1000) if len(hashrate) > 4 else 0,
+                    "h24h": (hashrate[5] * 1000) if len(hashrate) > 5 else 0,
                     "accepted": data.get("results", {}).get("accepted", 0),
                     "rejected": data.get("results", {}).get("rejected", 0),
                     "version": data.get("version", "unknown")
