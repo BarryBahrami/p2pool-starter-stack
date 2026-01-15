@@ -130,6 +130,15 @@ services:
         - "host.docker.internal:host-gateway"
       container_name: dashboard
       restart: unless-stopped
+      environment:
+        # XMRig Proxy Integration (for thousands of workers)
+        # Set to "auto" to auto-detect proxy IPs from P2Pool stratum stats
+        # Or manually specify: "10.14.0.10,10.14.0.20,10.14.0.30"
+        # Set to "none" to disable proxy stats and use only P2Pool stratum data
+        - XMRIG_PROXY_HOSTS=auto
+        # Optional: Access token for XMRig Proxy API (if proxy requires authentication)
+        # Leave commented out if proxy has "access-token": null in config
+        # - XMRIG_PROXY_TOKEN=your-access-token-here
       volumes:
         - ./data/p2pool/stats:/app/stats:ro
         - ./data/monero:/app/logs/monero:ro
