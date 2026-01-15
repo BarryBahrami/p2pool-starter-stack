@@ -132,8 +132,11 @@ services:
       restart: unless-stopped
       volumes:
         - ./data/p2pool/stats:/app/stats:ro
+        - ./data/monero:/app/logs/monero:ro
+        - ./data/tari:/app/logs/tari:ro
         - /home:/data:ro
         - /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket
+        - /var/run/docker.sock:/var/run/docker.sock:ro
       network_mode: "host"
 
 networks:
